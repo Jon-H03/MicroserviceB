@@ -1,14 +1,16 @@
 from flask import Flask, request, jsonify
 import os
 from dotenv import load_dotenv
-import openai
+from openai import OpenAI
 
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+api_key = os.getenv("OPENAI_API_KEY")
 
 # initialize flask app
 app = Flask(__name__)
 
+# Initialize OpenAI client
+client = OpenAI(api_key=api_key)
 
 # Haiku Generator Endpoint
 @app.route('/generate-haiku', methods=['POST'])
@@ -17,7 +19,7 @@ def generate_haiku():
         data = request.json
         topic = data.get('topic', 'nature')
 
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a haiku generator."},
@@ -28,10 +30,11 @@ def generate_haiku():
         )
 
         # Extract and print the response
-        haiku = response['choices'][0]['message']['content']
+        haiku = response.choices[0].message.content
 
         return jsonify({"haiku": haiku}), 200
     except Exception as e:
+        print(e)
         return jsonify({"error": str(e)}), 500
 
 
